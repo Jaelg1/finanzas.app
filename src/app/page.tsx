@@ -1,6 +1,9 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
+/** OAuth envía ?code= a / a veces; la página debe ejecutarse en el servidor, no como HTML estático */
+export const dynamic = "force-dynamic";
+
 type Search = Record<string, string | string[] | undefined>;
 
 function oauthCallbackRedirect(sp: Search) {
