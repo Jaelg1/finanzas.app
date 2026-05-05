@@ -1,22 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
+/**
+ * Solo /login y /dashboard: evita ejecutar Supabase en Edge para / y /auth/callback
+ * (PKCE con ?code= en / rompía con MIDDLEWARE_INVOCATION_FAILED en Vercel).
+ */
 export async function middleware(request: NextRequest) {
-  /* Google/Supabase a veces redirigen con ?code= a la raíz; el intercambio debe hacerse en /auth/callback */
-  if (
-    request.nextUrl.pathname === "/" &&
-    request.nextUrl.searchParams.has("code")
-  ) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/auth/callback";
-    return NextResponse.redirect(url);
-  }
-
-  /* El route handler intercambia el código; evitar getUser aquí (fallos en Edge / PKCE) */
-  if (request.nextUrl.pathname.startsWith("/auth/callback")) {
-    return NextResponse.next();
-  }
-
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!supabaseUrl || !supabaseKey) {
@@ -72,7 +61,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
-  ],
+  matcher: ["/dashboard/:path*", "/login"],
 };
